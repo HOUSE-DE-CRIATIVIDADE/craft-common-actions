@@ -250,7 +250,7 @@ jobs:
 
       - name: Install cargo tools
         if: inputs.tools != ''
-        uses: step-security/taiki-e-install-action@76747d22a7567cc4438546a84f11bdf18e670ab8 # v2.87.32
+        uses: taiki-e/install-action@5488ac5a951645ce95062214902ac4b6bc1a1037 # v2.87.32
         with:
           tool: ${{ inputs.tools }}
 
@@ -277,7 +277,7 @@ jobs:
 
       # Default-branch writes remain the default. Maintainers can explicitly opt manual
       # branch runs into branch-scoped writes; pull-request runs never save a cache.
-      - uses: step-security/rust-cache@8871c8ba063416da7c32246932ea6ae08700453e # v2.9.2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           prefix-key: ${{ inputs.cache-version }}-rust
           key: ${{ steps.cache-profile.outputs.key }}

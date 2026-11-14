@@ -100,15 +100,28 @@ jobs:
         uses: storytold/craft-common-actions/actions/configure-apt-mirrors@main
       - name: Drop the Microsoft apt source
         run: sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft-prod.sources
+      # Private repos get smaller runners (2 vCPU, ~7 GB): size the VM from the host
+      # instead of a fixed 4 CPU / 12 GB, which QEMU cannot boot there.
+      - name: Size the FreeBSD VM
+        id: vm-size
+        run: |
+          cpu=$(nproc)
+          [ "$cpu" -gt 4 ] && cpu=4
+          total=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+          mem=$(( total - 2048 ))
+          [ "$mem" -gt 12288 ] && mem=12288
+          echo "cpu=$cpu" >> "$GITHUB_OUTPUT"
+          echo "mem=$mem" >> "$GITHUB_OUTPUT"
+          echo "FreeBSD VM: $cpu CPU, $mem MB (host $(nproc) CPU, $total MB)"
       - name: Start the FreeBSD VM
-        uses: step-security/freebsd-vm@a2f5754275f7b0d5cea7f2762c9960727950f128 # v1.5.9
+        uses: vmactions/freebsd-vm@c46abacb49f09938ca4e1702d15d836285d694cc # v1.5.9
         with:
           release: ${{ inputs.freebsd-release == '15.1-STABLE' && '15.1' || inputs.freebsd-release }}
           # Always an x86_64 guest, which KVM accelerates: aarch64 is cross-compiled in it,
           # because an emulated aarch64 guest compiles about 23 times slower (#33).
           usesh: true
-          cpu: 4
-          mem: 12288
+          cpu: ${{ steps.vm-size.outputs.cpu }}
+          mem: ${{ steps.vm-size.outputs.mem }}
           copyback: false
           envs: "CARGO_HOME CARGO_TARGET_DIR CARGO_INCREMENTAL CARGO_BUILD_JOBS CARGO_BUILD_EXTRA_ARGS CARGO_TEST_EXTRA_ARGS CUSTOM_TEST_COMMAND ARCH"
           prepare: |
